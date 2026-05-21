@@ -30,6 +30,7 @@ const adminUser = {
   email: 'admin@odisha.shop',
   password: 'admin123456',
   role: 'admin',
+  isVerified: true,
 }
 
 const seed = async () => {

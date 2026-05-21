@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs'
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true, minlength: 6 },
+  password: { type: String, required: function() { return !this.googleId; }, minlength: 6 },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   isBlocked: { type: Boolean, default: false },
   phone: { type: String },
@@ -15,16 +15,23 @@ const userSchema = new mongoose.Schema({
     state: String,
     pincode: String,
   },
-  createdAt: { type: Date, default: Date.now },
-})
+  isVerified: { type: Boolean, default: false },
+  googleId: { type: String },
+  otp: { type: String },
+  otpExpiry: { type: Date },
+  resetOtp: { type: String },
+  resetOtpExpiry: { type: Date },
+}, { timestamps: true })
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next()
+  if (!this.password) return next() // Skip hashing if no password (Google OAuth user)
   this.password = await bcrypt.hash(this.password, 12)
   next()
 })
 
 userSchema.methods.matchPassword = async function (entered) {
+  if (!this.password) return false // Google users without password can't match normal passwords
   return bcrypt.compare(entered, this.password)
 }
 
@@ -113,3 +120,21 @@ const orderSchema = new mongoose.Schema({
 }, { timestamps: true })
 
 export const Order = mongoose.model('Order', orderSchema)
+
+// ── Address ───────────────────────────────────────────────────────────────────
+const addressSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  name: { type: String, required: true, trim: true },
+  phone: { type: String, required: true, trim: true },
+  pincode: { type: String, required: true, trim: true },
+  locality: { type: String, required: true, trim: true },
+  address: { type: String, required: true, trim: true }, // Area and Street
+  city: { type: String, required: true, trim: true },
+  state: { type: String, required: true, trim: true },
+  landmark: { type: String, trim: true },
+  alternatePhone: { type: String, trim: true },
+  addressType: { type: String, enum: ['home', 'work'], default: 'home' },
+  isDefault: { type: Boolean, default: false }
+}, { timestamps: true })
+
+export const Address = mongoose.model('Address', addressSchema)

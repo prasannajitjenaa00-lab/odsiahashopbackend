@@ -1,5 +1,17 @@
 import express from 'express'
-import { register, login, getMe, updateProfile } from '../controllers/authController.js'
+import { 
+  register, 
+  login, 
+  getMe, 
+  updateProfile, 
+  verifyOtp, 
+  resendOtp, 
+  forgotPassword, 
+  verifyResetOtp, 
+  resetPassword, 
+  googleLogin, 
+  logoutUser 
+} from '../controllers/authController.js'
 import { protect, admin } from '../middleware/auth.js'
 import { getProducts, getProduct, createProduct, updateProduct, deleteProduct, addReview, getFeatured } from '../controllers/productController.js'
 import { createOrder, verifyPayment, getMyOrders, getOrder, getAllOrders, updateOrderStatus, getAnalytics } from '../controllers/orderController.js'
@@ -7,6 +19,7 @@ import { getCategories, createCategory, updateCategory, deleteCategory } from '.
 import { upload } from '../middleware/upload.js'
 import { User } from '../models/index.js'
 import { checkPincode } from '../controllers/pincodeController.js'
+import { addAddress, getUserAddresses, updateAddress, deleteAddress, setDefaultAddress } from '../controllers/addressController.js'
 
 const router = express.Router()
 
@@ -15,7 +28,14 @@ router.post('/check-pincode', checkPincode)
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 router.post('/auth/register', register)
+router.post('/auth/verify-otp', verifyOtp)
+router.post('/auth/resend-otp', resendOtp)
 router.post('/auth/login', login)
+router.post('/auth/forgot-password', forgotPassword)
+router.post('/auth/verify-reset-otp', verifyResetOtp)
+router.post('/auth/reset-password', resetPassword)
+router.post('/auth/google-login', googleLogin)
+router.post('/auth/logout', logoutUser)
 router.get('/auth/me', protect, getMe)
 router.put('/auth/profile', protect, updateProfile)
 
@@ -43,10 +63,17 @@ router.get('/orders', protect, admin, getAllOrders)
 router.get('/orders/:id', protect, getOrder)
 router.put('/orders/:id/status', protect, admin, updateOrderStatus)
 
+// ── Addresses ─────────────────────────────────────────────────────────────────
+router.post('/addresses', protect, addAddress)
+router.get('/addresses', protect, getUserAddresses)
+router.put('/addresses/:id', protect, updateAddress)
+router.delete('/addresses/:id', protect, deleteAddress)
+router.put('/addresses/:id/default', protect, setDefaultAddress)
+
 // ── Admin: Users ──────────────────────────────────────────────────────────────
 router.get('/admin/users', protect, admin, async (req, res) => {
   try {
-    const users = await User.find({}).select('-password').sort({ createdAt: -1 })
+    const users = await User.find({ isVerified: true }).select('-password').sort({ createdAt: -1 })
     res.json(users)
   } catch (err) {
     res.status(500).json({ message: err.message })

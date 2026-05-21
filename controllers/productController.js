@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { Product } from '../models/index.js'
+import { Product, Order } from '../models/index.js'
 
 // @desc  Get all products (with filter/search/sort)
 // @route GET /api/products
@@ -113,6 +113,17 @@ export const addReview = async (req, res) => {
     const { rating, comment } = req.body
     const product = await Product.findById(req.params.id)
     if (!product) return res.status(404).json({ message: 'Product not found' })
+
+    // Check if user has a delivered order for this product
+    const deliveredOrder = await Order.findOne({
+      user: req.user._id,
+      status: 'Delivered',
+      'items.product': product._id
+    })
+
+    if (!deliveredOrder) {
+      return res.status(400).json({ message: 'You can only review products that have been delivered to you' })
+    }
 
     const alreadyReviewed = product.reviews.find(r => r.user.toString() === req.user._id.toString())
     if (alreadyReviewed) return res.status(400).json({ message: 'Product already reviewed' })

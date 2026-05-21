@@ -174,6 +174,10 @@ export const getAllOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status, courierName, trackingId } = req.body
+    
+    const orderExists = await Order.findById(req.params.id)
+    if (!orderExists) return res.status(404).json({ message: 'Order not found' })
+
     const updateData = { status }
     if (courierName !== undefined) updateData.courierName = courierName
     if (trackingId !== undefined) updateData.trackingId = trackingId
@@ -181,10 +185,15 @@ export const updateOrderStatus = async (req, res) => {
     if (status === 'Delivered') {
       updateData.isDelivered = true
       updateData.deliveredAt = Date.now()
+      
+      // If Cash on Delivery (COD), mark as paid because cash is collected upon delivery!
+      if (orderExists.paymentMethod === 'cod') {
+        updateData.isPaid = true
+        updateData.paidAt = Date.now()
+      }
     }
     
     const order = await Order.findByIdAndUpdate(req.params.id, updateData, { new: true })
-    if (!order) return res.status(404).json({ message: 'Order not found' })
     res.json(order)
   } catch (err) {
     res.status(500).json({ message: err.message })
