@@ -20,6 +20,7 @@ import { upload } from '../middleware/upload.js'
 import { User } from '../models/index.js'
 import { checkPincode } from '../controllers/pincodeController.js'
 import { addAddress, getUserAddresses, updateAddress, deleteAddress, setDefaultAddress } from '../controllers/addressController.js'
+import { getBlogs, getBlogBySlug, createBlog, updateBlog, deleteBlog } from '../controllers/blogController.js'
 
 const router = express.Router()
 
@@ -70,6 +71,27 @@ router.put('/addresses/:id', protect, updateAddress)
 router.delete('/addresses/:id', protect, deleteAddress)
 router.put('/addresses/:id/default', protect, setDefaultAddress)
 
+// ── Blogs ─────────────────────────────────────────────────────────────────────
+router.get('/blogs', getBlogs)
+router.get('/blogs/post/:slug', getBlogBySlug)
+router.post('/blogs', protect, admin, createBlog)
+router.put('/blogs/:id', protect, admin, updateBlog)
+router.delete('/blogs/:id', protect, admin, deleteBlog)
+
+// ── Contact Inquiries ──────────────────────────────────────────────────────────
+import { createInquiry, getInquiries } from '../controllers/contactController.js'
+import { Inquiry } from '../models/index.js'
+router.post('/contact', createInquiry)
+router.get('/contact/inquiries', protect, admin, getInquiries)
+router.delete('/contact/inquiries/:id', protect, admin, async (req, res) => {
+  try {
+    await Inquiry.findByIdAndDelete(req.params.id)
+    res.json({ message: 'Inquiry deleted' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
 // ── Admin: Users ──────────────────────────────────────────────────────────────
 router.get('/admin/users', protect, admin, async (req, res) => {
   try {
@@ -105,7 +127,9 @@ router.put('/admin/users/:id/block', protect, admin, async (req, res) => {
 // ── Admin: Image Uploads ──────────────────────────────────────────────────────
 router.post('/admin/upload', protect, admin, upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No file uploaded' })
-  res.json({ imageUrl: `/uploads/${req.file.filename}` })
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const fullUrl = `${protocol}://${req.get('host')}/uploads/${req.file.filename}`
+  res.json({ imageUrl: fullUrl })
 })
 
 export default router

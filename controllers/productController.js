@@ -61,9 +61,29 @@ export const createProduct = async (req, res) => {
   try {
     if (req.body.productName) req.body.name = req.body.productName
     if (req.body.featured !== undefined) req.body.isFeatured = req.body.featured
-    if (req.body.name && !req.body.shortName) {
+    if (req.body.name && !req.body.name.toLowerCase().startsWith('desi')) {
+      req.body.name = 'Desi ' + req.body.name
+    }
+    if (req.body.shortName && !req.body.shortName.toLowerCase().startsWith('desi')) {
+      req.body.shortName = 'Desi ' + req.body.shortName
+    } else if (req.body.name && !req.body.shortName) {
       req.body.shortName = req.body.name.split(' ')[0]
     }
+    
+    // Discount Calculation
+    if (req.body.originalPrice && req.body.discountPercent !== undefined) {
+      const orig = Number(req.body.originalPrice);
+      const dist = Number(req.body.discountPercent);
+      if (orig > 0 && dist >= 0) {
+        req.body.discountedPrice = Math.round(orig - (orig * dist / 100));
+        req.body.price = req.body.discountedPrice;
+      }
+    } else if (req.body.price && !req.body.originalPrice) {
+      req.body.originalPrice = req.body.price;
+      req.body.discountedPrice = req.body.price;
+      req.body.discountPercent = 0;
+    }
+
     const product = await Product.create(req.body)
     res.status(201).json(product)
   } catch (err) {
@@ -80,9 +100,25 @@ export const updateProduct = async (req, res) => {
     }
     if (req.body.productName) req.body.name = req.body.productName
     if (req.body.featured !== undefined) req.body.isFeatured = req.body.featured
-    if (req.body.name && !req.body.shortName) {
+    if (req.body.name && !req.body.name.toLowerCase().startsWith('desi')) {
+      req.body.name = 'Desi ' + req.body.name
+    }
+    if (req.body.shortName && !req.body.shortName.toLowerCase().startsWith('desi')) {
+      req.body.shortName = 'Desi ' + req.body.shortName
+    } else if (req.body.name && !req.body.shortName) {
       req.body.shortName = req.body.name.split(' ')[0]
     }
+
+    // Discount Calculation
+    if (req.body.originalPrice !== undefined || req.body.discountPercent !== undefined) {
+      const orig = Number(req.body.originalPrice || 0);
+      const dist = Number(req.body.discountPercent || 0);
+      if (orig > 0 && dist >= 0) {
+        req.body.discountedPrice = Math.round(orig - (orig * dist / 100));
+        req.body.price = req.body.discountedPrice;
+      }
+    }
+
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
     if (!product) return res.status(404).json({ message: 'Product not found' })
     res.json(product)

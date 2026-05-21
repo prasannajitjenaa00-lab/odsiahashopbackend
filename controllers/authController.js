@@ -139,7 +139,7 @@ export const login = async (req, res) => {
 
     const user = await User.findOne({ email })
     if (!user)
-      return res.status(400).json({ message: 'Email is not registered' })
+      return res.status(400).json({ message: 'Your email has not been registered. Please create an account.' })
 
     if (!(await user.matchPassword(password)))
       return res.status(401).json({ message: 'Invalid email or password' })

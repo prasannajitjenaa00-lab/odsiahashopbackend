@@ -50,6 +50,9 @@ const productSchema = new mongoose.Schema({
   shortName: { type: String },
   description: { type: String, required: true },
   price: { type: Number, required: true, min: 0 },
+  originalPrice: { type: Number },
+  discountPercent: { type: Number, default: 0 },
+  discountedPrice: { type: Number },
   weight: { type: String, default: '1kg' },
   category: { type: String, required: true },
   stock: { type: Number, required: true, default: 0 },
@@ -138,3 +141,32 @@ const addressSchema = new mongoose.Schema({
 }, { timestamps: true })
 
 export const Address = mongoose.model('Address', addressSchema)
+
+// ── Blog ──────────────────────────────────────────────────────────────────────
+const blogSchema = new mongoose.Schema({
+  title: { type: String, required: true, trim: true },
+  slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  category: { type: String, required: true, trim: true },
+  shortDescription: { type: String, required: true, trim: true },
+  content: { type: String, required: true },
+  image: { type: String, required: true },
+  tags: [{ type: String, trim: true }],
+  author: { type: String, default: 'OdishaShop' },
+  publishDate: { type: Date, default: Date.now },
+  metaTitle: { type: String, trim: true },
+  metaDescription: { type: String, trim: true }
+}, { timestamps: true })
+
+export const Blog = mongoose.model('Blog', blogSchema)
+
+// ── Contact Inquiry ───────────────────────────────────────────────────────────
+const inquirySchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  email: { type: String, required: true, lowercase: true, trim: true },
+  phone: { type: String, required: true, trim: true },
+  subject: { type: String, required: true, trim: true },
+  message: { type: String, required: true },
+  status: { type: String, default: 'Pending', enum: ['Pending', 'Read', 'Replied'] }
+}, { timestamps: true })
+
+export const Inquiry = mongoose.model('Inquiry', inquirySchema)

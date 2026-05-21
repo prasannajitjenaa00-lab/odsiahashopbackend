@@ -50,10 +50,12 @@ export const sendOTPEmail = async (email, otp, name, type = 'verification') => {
       `,
     }
 
-    await transporter.sendMail(mailOptions)
-    console.log(`[EMAIL SUCCESS] OTP email sent successfully to ${email}`)
+    transporter.sendMail(mailOptions)
+      .then(() => console.log(`[EMAIL SUCCESS] OTP email sent successfully to ${email}`))
+      .catch((error) => console.error(`[EMAIL ERROR] Failed to send OTP email to ${email}:`, error.message))
+    
+    // We don't await the above so the API responds quickly to the user.
   } catch (error) {
-    console.error(`[EMAIL ERROR] Failed to send OTP email to ${email}:`, error.message)
-    // Don't crash the server, just let it proceed with console OTP log for robust user registration
+    console.error(`[EMAIL SETUP ERROR] Failed to initialize email sending:`, error.message)
   }
 }
