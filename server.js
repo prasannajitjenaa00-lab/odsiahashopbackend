@@ -17,33 +17,25 @@ const __dirname = path.dirname(__filename)
 // ── Middleware ────────────────────────────────────────────────────────────────
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://odishashop.netlify.app'
+  'https://odishashop.netlify.app',
+  'https://www.odishashop.netlify.app',
 ];
 
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true)
-    if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost:')) return callback(null, true)
+    if (allowedOrigins.includes(origin)) return callback(null, true)
     console.warn('Blocked CORS origin:', origin)
     return callback(new Error('Not allowed by CORS'))
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions))
 app.options('*', cors(corsOptions))
-app.use((req, res, next) => {
-  const origin = req.headers.origin
-  if (origin && (allowedOrigins.includes(origin) || origin.startsWith('http://localhost:'))) {
-    res.setHeader('Access-Control-Allow-Origin', origin)
-    res.setHeader('Access-Control-Allow-Credentials', 'true')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
-  }
-  next()
-})
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
